@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">HotdogNotHotdog</string>
+    <string name="camera_button_text">Take Photo</string>
+</resources>
