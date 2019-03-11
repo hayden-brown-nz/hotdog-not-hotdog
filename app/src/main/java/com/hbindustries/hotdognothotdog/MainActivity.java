@@ -1,10 +1,11 @@
 package com.hbindustries.hotdognothotdog;
 
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -16,9 +17,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -26,13 +31,19 @@ import java.util.Date;
 // Guide from:
 // https://developer.android.com/training/camera/photobasics#java
 
-
 public class MainActivity extends AppCompatActivity {
 
     static final int REQUEST_TAKE_PHOTO = 1;
     ImageView imageView;
     Button btnCamera;
+    TextView categoryTextView;
     String currentPhotoPath;
+    ImageClassifier imgClassifier;
+
+    final String[] categories = {
+            "Hotdog !",
+            "Not Hotdog !"
+    };
 
     private File createImageFile() throws IOException {
         // Create an image file name
@@ -56,21 +67,30 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        try {
+            AssetFileDescriptor modelFileDescriptor = this.getAssets().openFd(getResources().getString(R.string.model_asset_file));
+            imgClassifier = new ImageClassifier(modelFileDescriptor);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
         imageView = (ImageView) findViewById(R.id.imageView);
         btnCamera = (Button) findViewById(R.id.btnCamera);
+        categoryTextView = (TextView) findViewById(R.id.categoryTextView);
 
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick (View view) {
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                // Ensure that there's an activity availablt to handle the intent
+                // Ensure that there's an activity available to handle the intent
                 if (intent.resolveActivity(getPackageManager()) != null) {
-
                     File photoFile = null;
                     try {
                         photoFile = createImageFile();
                     } catch (IOException ex) {
                         // Error occurred when creating file
+                        Log.e("HotdogNotHotdog", "Exception: " + ex.toString());
                     }
 
                     // Continue if file was created
@@ -107,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                 this.sendBroadcast(mediaScanIntent);
 
 
-                // Discover image orietnation
+                // Discover image orientation
                 ExifInterface ei = new ExifInterface(f.getPath());
                 int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
 
@@ -146,6 +166,11 @@ public class MainActivity extends AppCompatActivity {
                 // Display image
                 imageView.setImageBitmap(scaledBitmap);
 
+                // Do classification prediction
+                String category = categories[(int) imgClassifier.doInference(scaledBitmap)];
+                categoryTextView.setVisibility(1);
+                categoryTextView.setText(category);
+
             } catch (Exception ex) {
                 Log.e("HotdogNotHotdog", "Exception: " + ex.toString());
             }
@@ -157,8 +182,7 @@ public class MainActivity extends AppCompatActivity {
     public static Bitmap rotateImage(Bitmap source, float angle) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -166,9 +190,7 @@ public class MainActivity extends AppCompatActivity {
         final int height = options.outHeight;
         final int width = options.outWidth;
         int inSampleSize = 1;
-
         if (height > reqHeight || width > reqWidth) {
-
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
 
@@ -179,7 +201,6 @@ public class MainActivity extends AppCompatActivity {
                 inSampleSize *= 2;
             }
         }
-
         return inSampleSize;
     }
 

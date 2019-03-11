@@ -15,6 +15,19 @@
         android:layout_width="match_parent"
         android:layout_height="fill_parent" />
 
+    <TextView
+        android:id="@+id/categoryTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/finger_paint"
+        android:text="Hotdog Detected !"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+        android:textColor="@color/colorAccent"
+        android:textStyle="bold"
+        android:typeface="normal"
+        android:visibility="invisible" />
+
     <Button
         android:id="@+id/btnCamera"
         android:layout_weight="1"

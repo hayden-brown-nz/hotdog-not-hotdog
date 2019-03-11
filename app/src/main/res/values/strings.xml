@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">HotdogNotHotdog</string>
     <string name="camera_button_text">Take Photo</string>
+    <string name="model_asset_file">hotdogs-vs-other-cnn-5-conv-64-nodes-1-dense-15-epochs-2019-03-11_2139hrs.tflite</string>
 </resources>
